@@ -11,13 +11,13 @@ class Maze
 {
 private:
 
-    static const int MAXS = 100;
-    static const char SEP = '#';
+    static const int MAXS = 100; //maksymalny rozmiar mapy
+    static const char SEP = '#'; //znak oznaczaj¹cy separator
     static const int dx[4];
     static const int dy[4];
 
-    char map[MAXS][MAXS];
-    int height,width;
+    char map[MAXS][MAXS]; //macierz znaków symbolizuj¹ca labirynt 
+    int height,width; //wymiary labiryntu
 
     bool valid(int sty,int stx,int y,int x);
     void Generate(int sty,int stx);
