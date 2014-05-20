@@ -1,4 +1,4 @@
-#Maze walker
+#Mazewalker
 
 ###Do zrobienia:
 
