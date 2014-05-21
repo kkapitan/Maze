@@ -70,6 +70,8 @@ int vertexCount=teapotVertexCount;*/
 int maze_size = 30;
 Maze M = Maze(maze_size, maze_size);
 
+bool fly = false;
+int p_i = 1, p_j = 1;
 
 //Procedura rysuj¹ca jakiœ obiekt. Ustawia odpowiednie parametry dla vertex shadera i rysuje.
 void drawObject() {
@@ -91,6 +93,14 @@ void drawObject() {
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("V"), 1, false, glm::value_ptr(matV));
 	glUniformMatrix4fv(shaderProgram->getUniformLocation("M"), 1, false, glm::value_ptr(matM));
 
+	glUniform4f(shaderProgram->getUniformLocation("pos"), m_eye.x, m_eye.y, m_eye.z, 1);
+	glUniform4f(shaderProgram->getUniformLocation("La"), 0.5, 0.5, 0.5, 1);
+	glUniform4f(shaderProgram->getUniformLocation("Ma"), 0.5, 0.5, 0.5, 1);
+	glUniform4f(shaderProgram->getUniformLocation("Ls"), 0.0, 1.0, 1.0, 1);
+	glUniform4f(shaderProgram->getUniformLocation("Ms"), 0.0, 1.0, 1.0, 1);
+	glUniform4f(shaderProgram->getUniformLocation("Ld"), 1.0, 1.0, 1.0, 1);
+
+
 	//Uaktywnienie VAO i tym samym uaktywnienie predefiniowanych w tym VAO powi¹zañ slotów atrybutów z tablicami z danymi
 	glBindVertexArray(vao);
 
@@ -104,47 +114,71 @@ void drawObject() {
 	glBindVertexArray(0);
 }
 
-void Movement(unsigned char key, int x, int y) //Prymitywne poruszanie siê 
+bool Collision(glm::vec3 move,int &i,int &j) //Odwzorowanie ze wspó³rzêdnych oka na wspó³rzêdne w macierzy znaków reprezentuj¹cej labirynt
+{
+	int k1 = ((move + m_eye).x - m_eye.x > 0.1);
+	int k2 = ((move + m_eye).z - m_eye.z > 0.1);
+
+	i = int(floor((m_eye + move).x + 2 * k1)) / 4;
+	j = int(floor((m_eye + move).z + 2 * k2)) / 4;
+
+	return M[i][j] == '#';
+}
+
+void Movement(unsigned char key, int x, int y) 
 {
 	//Obrót zrealizowany jest jako rotacja wektora od oczu obserwatora do punktu na który patrzy wokó³ wektora wskazuj¹cego 'w górê' od obserwatora, 
 	//a nastêpnie wyliczenie nowego punktu skupienia wzroku obserwatora jako przesuniêcie punktu oczu o zrotowany wczeœniej wektor.
 
 	//Przesuniêcie to translacja punktu po³o¿enia obserwatora i punktu skupienia jego wzroku o znormalizowany wektor od oczu do obserwowanego punktu
 	//(w taki sposób modu³ tego wektora nie ulega zmianie).
+	
+	glm::vec4 vrot;
+	glm::vec3 move;
 
-	glm::vec4 temp;
-	glm::vec3 temp2;
+	int i, j;
 
-	if (key == 'a')
+
+	if (key == 'a' || key == 'd')
 	{
-		temp = glm::rotate(glm::mat4(1.0f), 3.0f, m_up)*glm::vec4(m_center - m_eye, 0);
-		m_center = m_eye + glm::vec3(temp);
+		vrot = glm::rotate(glm::mat4(1.0f), key == 'a' ? 3.0f : -3.0f, m_up)*glm::vec4(m_center - m_eye, 0);
+		m_center = m_eye + glm::vec3(vrot);
 	}
-	else if (key == 'd')
+	else if (key == 'w' || key == 's')
 	{
-		temp = glm::rotate(glm::mat4(1.0f), -3.0f, m_up)*glm::vec4(m_center - m_eye, 0);
-		m_center = m_eye + glm::vec3(temp);
-	}
-	else if (key == 'w')
-	{
-		temp2 = glm::normalize(m_center - m_eye);
-		temp2 *= 0.5;
-		int i = int(floor((m_eye + temp2).x)) / 4;
-		int j = int(floor((m_eye + temp2).z)) / 4;
-		printf("%d %d %f %f %f\n", i, j, (m_eye + temp2).x, (m_eye + temp2).z);
-		if (M[i][j] != '#')
+		move = glm::normalize(m_center - m_eye);
+		move *= 0.5;
+		
+		if (key == 's')move *= -1;
+	
+		if (!Collision(move,i,j) || fly)
 		{
-			m_eye += temp2;
-			m_center += temp2;
+			m_eye.x += move.x;
+			m_center.x += move.x;
+
+			m_eye.z += move.z;
+			m_center.z += move.z;
+		
+			if (fly)
+			{
+				m_eye.y += move.y;  
+				m_center.y += move.y;
+			}
+			else
+			{
+
+				M[i][j] = '$';
+				M[p_i][p_j] = '.';
+				p_i = i; p_j = j;
+			}
 		}
 	}
-	else if (key == 's')
+	else if (key == 'm')
 	{
-		temp2 = glm::normalize(m_center - m_eye);
-		m_eye -= temp2;
-		m_center -= temp2;
-		printf("%f %f %f\n", m_eye.x, m_eye.y, m_eye.z);
+		M.Show(); 
+		printf("%d %d\n", p_i, p_j);
 	}
+	else if (key == 'f')fly = !fly;
 }
 
 void MouseButtons(int button, int state, int x, int y)
@@ -177,12 +211,10 @@ void MouseActiveMotion(int mouse_x, int mouse_y)
 		glm::vec4 temp3;
 		glm::vec3 look = glm::normalize(m_center - m_eye);
 		glm::vec3 vert_rot = glm::cross(m_up, look);
-		//cout << vert_rot.x << " " << vert_rot.y << " " << vert_rot.z << " = " << m_up.x << " " << m_up.y << " " << m_up.z << " X " << look.x << " " << look.y << " " << look.z << endl;
+	
 		temp2 = glm::rotate(glm::mat4(1.0f), rely*mouse_speed, vert_rot)*glm::vec4(m_center - m_eye, 0);
 		temp3 = glm::rotate(glm::mat4(1.0f), rely*mouse_speed, vert_rot)*glm::vec4(m_up, 0);
 		m_center = m_eye + glm::vec3(temp2);
-		//m_up = glm::vec3(temp3);
-
 	}
 
 	mouse_x_prev = mouse_x;
@@ -196,6 +228,19 @@ void MouseMotion(int mouse_x, int mouse_y)
 	mouse_y_prev = mouse_y;
 }
 
+void DrawMaze() //Odwzorowanie macierzy znaków reprezentuj¹cych labirynt na model labiryntu w przestrzeni œwiata
+{
+	for (int i = 0; i < maze_size; i++)
+		for (int j = 0; j < maze_size; j++)
+			if (M[i][j] == '#')
+				for (int kx = 0; kx < 2; kx++)
+					for (int kz = 0; kz < 2; kz++)
+					{
+						matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i + kx*2.0f, 0, 4.0f*j + kz*2.0f));
+						drawObject();
+					}
+}
+
 //Procedura rysuj¹ca
 void displayFrame() {
 	//Wyczyœæ bufor kolorów i bufor g³êbokoœci
@@ -203,30 +248,24 @@ void displayFrame() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Wylicz macierz rzutowania
-	matP = glm::perspective(cameraAngle, (float)windowWidth / (float)windowHeight, 1.0f, 100.0f);
+	matP = glm::perspective(cameraAngle, (float)windowWidth / (float)windowHeight, 0.5f, 100.0f);
 
 	//Wylicz macierz widoku
 	matV = glm::lookAt(m_eye, m_center, m_up);
 
-	//Wylicz macierz modelu
-	for (int i = 0; i < maze_size; i++)
-		for (int j = 0; j < maze_size; j++)
-			if (M[i][j] == '#')
-			{
-				matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i, 0, 4.0f*j));
-				drawObject();
 
-				matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i + 2.0f, 0, 4.0f*j));
-				drawObject();
-
-				matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i, 0, 4.0f*j + 2.0f));
-				drawObject();
-
-				matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i + 2.0f, 0, 4.0f*j + 2.0f));
-				drawObject();
-			}
-
-	//Narysuj obiekt
+	//Pod³oga
+	matM = glm::scale(glm::mat4(1.0f), glm::vec3(2*maze_size, 1.0f, 2*maze_size));
+	matM = glm::translate(matM, glm::vec3(0.984f, -2.0f, 0.984f));
+	drawObject();
+	
+	//Sufit
+	/*matM = glm::scale(glm::mat4(1.0f), glm::vec3(2 * maze_size, 1.0f, 2 * maze_size));
+	matM = glm::translate(matM, glm::vec3(0.984f, 2.0f, 0.984f));
+	drawObject();
+	*/
+	
+	DrawMaze();
 
 	//Tylny bufor na przedni
 	glutSwapBuffers();

@@ -1,8 +1,32 @@
 #version 330
 
 out vec4 pixelColor; //Zmienna wyjsciowa fragment shadera. Zapisuje sie do niej ostateczny (prawie) kolor piksela
+
 in vec4 ic;
+in vec4 n;
+in vec4 l;
+in vec4 v;
+uniform vec4 La;
+uniform vec4 Ma;
+uniform vec4 Ld;
+uniform vec4 Ls;
+uniform vec4 Ms;
 
 void main(void) {
-	pixelColor=ic; //Zapisz jako kolor piksela, kolor bialy
+	float phong_val=50;
+	int toon_val=1;
+	vec4 my_n = normalize(n);
+	vec4 my_l = normalize(l);
+	vec4 my_v = normalize(v);
+	vec4 r = reflect(-my_l,my_n);
+
+	float nl = max(0,dot(my_n,my_l));
+	nl=round(nl*toon_val)/toon_val;
+	vec4 mod=vec4(nl,nl,nl,1);
+
+	float rv = pow(max(0,dot(r,my_v)),phong_val);
+	vec4 mod2=vec4(rv,rv,rv,0);
+
+	pixelColor=Ma*La+ic*Ld*mod+Ms*Ls*mod2;
+	//pixelColor = ic*Ld*mod; 
 }
