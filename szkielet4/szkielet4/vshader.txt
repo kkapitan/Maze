@@ -12,27 +12,21 @@ uniform vec4 pos;
 in vec4 vertex; //wspolrzedne wierzcholka w przestrzeni modelu
 in vec4 color;  //kolor wierzcholka (na razie ignorowany)
 in vec4 normal; //wektor normalny w wierzcholku (na razie ignorowany)
-
+in vec2 texCoord; 
 
 out vec4 ic;
 out vec4 n;
 out vec4 l;
 out vec4 v;
-
+out vec2 iTexCoord; 
 
 void main(void) {
 	n = normalize(V*M*normal);
 	l = normalize(V*pos - V*M*vertex);
-	//float nl = max(0,dot(n,l));
-	//vec4 mod=vec4(nl,nl,nl,1);
-
-	//vec4 r = reflect(-l,n);
-	v = normalize(vec4(0,0,0,1) - V*M*vertex);
-	//float rv = pow(max(0,dot(r,v)),phong_val);
-	//vec4 mod2=vec4(rv,rv,rv,0);
-
 	
+	v = normalize(vec4(0,0,0,1) - V*M*vertex);
 	ic = vec4(0.5,0.5,0.5,1.0);
-
+	
+	iTexCoord=texCoord;
 	gl_Position=P*V*M*vertex;
 }

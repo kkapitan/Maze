@@ -6,11 +6,15 @@ in vec4 ic;
 in vec4 n;
 in vec4 l;
 in vec4 v;
+in vec2 iTexCoord;
+
 uniform vec4 La;
 uniform vec4 Ma;
 uniform vec4 Ld;
 uniform vec4 Ls;
 uniform vec4 Ms;
+uniform sampler2D textureMap0; 
+
 
 void main(void) {
 	float phong_val=50;
@@ -27,6 +31,7 @@ void main(void) {
 	float rv = pow(max(0,dot(r,my_v)),phong_val);
 	vec4 mod2=vec4(rv,rv,rv,0);
 
-	pixelColor=Ma*La+ic*Ld*mod+Ms*Ls*mod2;
-	//pixelColor = ic*Ld*mod; 
+    vec4 texColor=texture(textureMap0,iTexCoord);
+	//pixelColor=Ma*La+texColor*Ld*mod+Ms*Ls*mod2;
+		pixelColor=texColor*mod;
 }

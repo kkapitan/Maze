@@ -61,6 +61,10 @@ float *colors = cubeColors;
 float *normals = cubeNormals;
 int vertexCount = cubeVertexCount;
 
+GLuint bufTexCoords;
+GLuint tex0;
+
+
 //Czajnik
 /*float *vertices=teapotVertices;
 float *colors=teapotColors;
@@ -72,6 +76,33 @@ Maze M = Maze(maze_size, maze_size);
 
 bool fly = false;
 int p_i = 1, p_j = 1;
+
+GLuint readTexture(char* filename) {
+	GLuint tex;
+	TGAImg img;
+	glActiveTexture(GL_TEXTURE0);
+	if (img.Load(filename) == IMG_OK) {
+		glGenTextures(1, &tex); //Zainicjuj uchwyt tex 
+		glBindTexture(GL_TEXTURE_2D, tex); //Przetwarzaj uchwyt tex 
+		if (img.GetBPP() == 24) //Obrazek 24bit 
+			glTexImage2D(GL_TEXTURE_2D, 0, 3, img.GetWidth(), img.GetHeight(), 0,
+			GL_RGB, GL_UNSIGNED_BYTE, img.GetImg());
+		else if (img.GetBPP() == 32) //Obrazek 32bit 
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, img.GetWidth(), img.GetHeight(), 0,
+			GL_RGBA, GL_UNSIGNED_BYTE, img.GetImg());
+		else {
+			printf("Nieobs³ugiwany format obrazka w pliku: %s \n", filename);
+		}
+	}
+	else {
+		printf("B³¹d przy wczytywaniu pliku: %s\n", filename);
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	return tex;
+}
 
 //Procedura rysuj¹ca jakiœ obiekt. Ustawia odpowiednie parametry dla vertex shadera i rysuje.
 void drawObject() {
@@ -100,6 +131,7 @@ void drawObject() {
 	glUniform4f(shaderProgram->getUniformLocation("Ms"), 0.0, 1.0, 1.0, 1);
 	glUniform4f(shaderProgram->getUniformLocation("Ld"), 1.0, 1.0, 1.0, 1);
 
+	glUniform1i(shaderProgram->getUniformLocation("textureMap0"), 0);
 
 	//Uaktywnienie VAO i tym samym uaktywnienie predefiniowanych w tym VAO powi¹zañ slotów atrybutów z tablicami z danymi
 	glBindVertexArray(vao);
@@ -114,7 +146,7 @@ void drawObject() {
 	glBindVertexArray(0);
 }
 
-bool Collision(glm::vec3 move,int &i,int &j) //Odwzorowanie ze wspó³rzêdnych oka na wspó³rzêdne w macierzy znaków reprezentuj¹cej labirynt
+bool Collision(glm::vec3 move,int &i,int &j)
 {
 	int k1 = ((move + m_eye).x - m_eye.x > 0.1);
 	int k2 = ((move + m_eye).z - m_eye.z > 0.1);
@@ -228,7 +260,7 @@ void MouseMotion(int mouse_x, int mouse_y)
 	mouse_y_prev = mouse_y;
 }
 
-void DrawMaze() //Odwzorowanie macierzy znaków reprezentuj¹cych labirynt na model labiryntu w przestrzeni œwiata
+void DrawMaze()
 {
 	for (int i = 0; i < maze_size; i++)
 		for (int j = 0; j < maze_size; j++)
@@ -283,6 +315,7 @@ GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
 
 //Procedura tworz¹ca bufory VBO zawieraj¹ce dane z tablic opisuj¹cych rysowany obiekt.
 void setupVBO() {
+	bufTexCoords = makeBuffer(cubeTexCoords, cubeVertexCount, sizeof(float)* 2);
 	bufVertices = makeBuffer(vertices, vertexCount, sizeof(float)* 4); //Wspó³rzêdne wierzcho³ków
 	bufColors = makeBuffer(colors, vertexCount, sizeof(float)* 4);//Kolory wierzcho³ków
 	bufNormals = makeBuffer(normals, vertexCount, sizeof(float)* 4);//Wektory normalne wierzcho³ków
@@ -295,6 +328,7 @@ void assignVBOtoAttribute(char* attributeName, GLuint bufVBO, int variableSize) 
 	glVertexAttribPointer(location, variableSize, GL_FLOAT, GL_FALSE, 0, NULL); //Dane do slotu location maj¹ byæ brane z aktywnego VBO
 }
 
+
 //Procedura tworz¹ca VAO - "obiekt" OpenGL wi¹¿¹cy numery slotów atrybutów z buforami VBO
 void setupVAO() {
 	//Wygeneruj uchwyt na VAO i zapisz go do zmiennej globalnej
@@ -303,6 +337,7 @@ void setupVAO() {
 	//Uaktywnij nowo utworzony VAO
 	glBindVertexArray(vao);
 
+	assignVBOtoAttribute("texCoord", bufTexCoords, 2);
 	assignVBOtoAttribute("vertex", bufVertices, 4); //"vertex" odnosi siê do deklaracji "in vec4 vertex;" w vertex shaderze
 	assignVBOtoAttribute("color", bufColors, 4); //"color" odnosi siê do deklaracji "in vec4 color;" w vertex shaderze
 	assignVBOtoAttribute("normal", bufNormals, 4); //"normal" odnosi siê do deklaracji "in vec4 normal;" w vertex shaderze
@@ -363,6 +398,7 @@ void setupShaders() {
 
 //procedura inicjuj¹ca ró¿ne sprawy zwi¹zane z rysowaniem w OpenGL
 void initOpenGL() {
+	tex0 = readTexture("metal.tga");
 	setupShaders();
 	setupVBO();
 	setupVAO();
