@@ -17,8 +17,8 @@ glm::mat4  matV;//widoku
 glm::mat4  matM;//modelu
 
 //Wektory i punkty
-glm::vec3 m_eye = glm::vec3(0.0f, 0.0f, 7.0f);  //Punkt w którym znajduje siê obserwator
-glm::vec3 m_center = glm::vec3(0.0f, 0.0f, 0.0f); //Punkt na który patrzy obserwator
+glm::vec3 m_eye = glm::vec3(5.0f, 0.0f, 5.0f);  //Punkt w którym znajduje siê obserwator
+glm::vec3 m_center = glm::vec3(6.0f, 0.0f, 6.0f); //Punkt na który patrzy obserwator
 glm::vec3 m_up = glm::vec3(0.0f, 1.0f, 0.0f); //Wektor od czubka g³owy obserwatora w górê
 
 //Ustawienia okna i rzutowania
@@ -66,6 +66,9 @@ int vertexCount = cubeVertexCount;
 float *colors=teapotColors;
 float *normals=teapotNormals;
 int vertexCount=teapotVertexCount;*/
+
+int maze_size = 30;
+Maze M = Maze(maze_size, maze_size);
 
 
 //Procedura rysuj¹ca jakiœ obiekt. Ustawia odpowiednie parametry dla vertex shadera i rysuje.
@@ -125,14 +128,22 @@ void Movement(unsigned char key, int x, int y) //Prymitywne poruszanie siê
 	else if (key == 'w')
 	{
 		temp2 = glm::normalize(m_center - m_eye);
-		m_eye += temp2;
-		m_center += temp2;
+		temp2 *= 0.5;
+		int i = int(floor((m_eye + temp2).x)) / 4;
+		int j = int(floor((m_eye + temp2).z)) / 4;
+		printf("%d %d %f %f %f\n", i, j, (m_eye + temp2).x, (m_eye + temp2).z);
+		if (M[i][j] != '#')
+		{
+			m_eye += temp2;
+			m_center += temp2;
+		}
 	}
 	else if (key == 's')
 	{
 		temp2 = glm::normalize(m_center - m_eye);
 		m_eye -= temp2;
 		m_center -= temp2;
+		printf("%f %f %f\n", m_eye.x, m_eye.y, m_eye.z);
 	}
 }
 
@@ -158,7 +169,7 @@ void MouseActiveMotion(int mouse_x, int mouse_y)
 	{
 		int relx = mouse_x - mouse_x_prev;
 		glm::vec4 temp;
-		temp = glm::rotate(glm::mat4(1.0f), relx*mouse_speed, m_up)*glm::vec4(m_center - m_eye, 0);
+		temp = glm::rotate(glm::mat4(1.0f), -relx*mouse_speed, m_up)*glm::vec4(m_center - m_eye, 0);
 		m_center = m_eye + glm::vec3(temp);
 
 		int rely = mouse_y - mouse_y_prev;
@@ -198,11 +209,24 @@ void displayFrame() {
 	matV = glm::lookAt(m_eye, m_center, m_up);
 
 	//Wylicz macierz modelu
-	matM = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.5, 1, 0));
+	for (int i = 0; i < maze_size; i++)
+		for (int j = 0; j < maze_size; j++)
+			if (M[i][j] == '#')
+			{
+				matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i, 0, 4.0f*j));
+				drawObject();
 
+				matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i + 2.0f, 0, 4.0f*j));
+				drawObject();
+
+				matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i, 0, 4.0f*j + 2.0f));
+				drawObject();
+
+				matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i + 2.0f, 0, 4.0f*j + 2.0f));
+				drawObject();
+			}
 
 	//Narysuj obiekt
-	drawObject();
 
 	//Tylny bufor na przedni
 	glutSwapBuffers();
@@ -324,7 +348,7 @@ void freeVAO() {
 
 int main(int argc, char** argv) {
 
-	Maze M = Maze(30, 30);
+	
 	M.Show();
 
 	initGLUT(&argc, argv);
