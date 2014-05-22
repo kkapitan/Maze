@@ -81,6 +81,7 @@
     <ClCompile Include="maze.cpp" />
     <ClCompile Include="shaderprogram.cpp" />
     <ClCompile Include="tga.cpp" />
+    <ClCompile Include="utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.txt" />
@@ -92,6 +93,7 @@
     <ClInclude Include="shaderprogram.h" />
     <ClInclude Include="teapot.h" />
     <ClInclude Include="tga.h" />
+    <ClInclude Include="utilities.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

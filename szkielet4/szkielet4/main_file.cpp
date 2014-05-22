@@ -8,7 +8,7 @@
 #include "shaderprogram.h"
 #include "cube.h"
 #include "teapot.h"
-
+#include "utilities.h"
 #include "maze.h"
 
 //Macierze
@@ -59,8 +59,17 @@ GLuint bufNormals; //Uchwyt na bufor VBO przechowuj¹cy tablickê wektorów normaln
 float *vertices = cubeVertices;
 float *colors = cubeColors;
 float *normals = cubeNormals;
+float *texCoords = cubeTexCoords;
 int vertexCount = cubeVertexCount;
 
+
+//Latarka
+float fv[10000]; //wierzcho³ki
+float fn[10000]; //wektory normalne
+float ftv[10000];//wsp. texturowania;
+int fvc; //liczba wierzcho³ków latarki;
+
+//Textury
 GLuint bufTexCoords;
 GLuint tex0;
 
@@ -71,38 +80,15 @@ float *colors=teapotColors;
 float *normals=teapotNormals;
 int vertexCount=teapotVertexCount;*/
 
+//Labirynt 
 int maze_size = 30;
 Maze M = Maze(maze_size, maze_size);
 
+//Zmienne pomocnicze
 bool fly = false;
 int p_i = 1, p_j = 1;
 
-GLuint readTexture(char* filename) {
-	GLuint tex;
-	TGAImg img;
-	glActiveTexture(GL_TEXTURE0);
-	if (img.Load(filename) == IMG_OK) {
-		glGenTextures(1, &tex); //Zainicjuj uchwyt tex 
-		glBindTexture(GL_TEXTURE_2D, tex); //Przetwarzaj uchwyt tex 
-		if (img.GetBPP() == 24) //Obrazek 24bit 
-			glTexImage2D(GL_TEXTURE_2D, 0, 3, img.GetWidth(), img.GetHeight(), 0,
-			GL_RGB, GL_UNSIGNED_BYTE, img.GetImg());
-		else if (img.GetBPP() == 32) //Obrazek 32bit 
-			glTexImage2D(GL_TEXTURE_2D, 0, 4, img.GetWidth(), img.GetHeight(), 0,
-			GL_RGBA, GL_UNSIGNED_BYTE, img.GetImg());
-		else {
-			printf("Nieobs³ugiwany format obrazka w pliku: %s \n", filename);
-		}
-	}
-	else {
-		printf("B³¹d przy wczytywaniu pliku: %s\n", filename);
-	}
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	return tex;
-}
+
 
 //Procedura rysuj¹ca jakiœ obiekt. Ustawia odpowiednie parametry dla vertex shadera i rysuje.
 void drawObject() {
@@ -134,6 +120,8 @@ void drawObject() {
 	glUniform4f(shaderProgram->getUniformLocation("m_center"), m_center.x, m_center.y, m_center.z, 1);
 	glUniform4f(shaderProgram->getUniformLocation("m_up"), m_up.x, m_up.y, m_up.z, 1);
 
+
+
 	glUniform1i(shaderProgram->getUniformLocation("textureMap0"), 0);
 
 	//Uaktywnienie VAO i tym samym uaktywnienie predefiniowanych w tym VAO powi¹zañ slotów atrybutów z tablicami z danymi
@@ -149,16 +137,22 @@ void drawObject() {
 	glBindVertexArray(0);
 }
 
-bool Collision(glm::vec3 move,int &i,int &j)
+bool CollisionX(glm::vec3 move,int &i)
 {
-	int k1 = ((move + m_eye).x - m_eye.x > 0.1);
-	int k2 = ((move + m_eye).z - m_eye.z > 0.1);
-
-	i = int(floor((m_eye + move).x + 2 * k1)) / 4;
-	j = int(floor((m_eye + move).z + 2 * k2)) / 4;
-
-	return M[i][j] == '#';
+	int k = ((move + m_eye).x - m_eye.x > 0.05);
+	i = int(floor((m_eye + move).x + 2 * k)) / 4;
+	
+	return M[i][int(floor(m_eye.z)/4)] == '#';
 }
+
+bool CollisionZ(glm::vec3 move, int &j)
+{
+	int k = ((move + m_eye).z - m_eye.z > 0.05);
+	j = int(floor((m_eye + move).z + 2 * k)) / 4;
+
+	return M[int(floor(m_eye.x)/4)][j] == '#';
+}
+
 
 void Movement(unsigned char key, int x, int y) 
 {
@@ -182,30 +176,28 @@ void Movement(unsigned char key, int x, int y)
 	else if (key == 'w' || key == 's')
 	{
 		move = glm::normalize(m_center - m_eye);
-		move *= 0.5;
-		
+		move *= 0.2;
+
 		if (key == 's')move *= -1;
-	
-		if (!Collision(move,i,j) || fly)
+
+		if (fly || !CollisionX(move, i))
 		{
 			m_eye.x += move.x;
 			m_center.x += move.x;
+			p_i = i;
+		}
 
+		if (fly || !CollisionZ(move, j))
+		{
 			m_eye.z += move.z;
 			m_center.z += move.z;
+			p_j = j;
+		}
 		
-			if (fly)
-			{
+		if (fly)
+		{
 				m_eye.y += move.y;  
 				m_center.y += move.y;
-			}
-			else
-			{
-
-				M[i][j] = '$';
-				M[p_i][p_j] = '.';
-				p_i = i; p_j = j;
-			}
 		}
 	}
 	else if (key == 'm')
@@ -277,34 +269,6 @@ void DrawMaze()
 }
 
 //Procedura rysuj¹ca
-void displayFrame() {
-	//Wyczyœæ bufor kolorów i bufor g³êbokoœci
-	glClearColor(0, 0, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	//Wylicz macierz rzutowania
-	matP = glm::perspective(cameraAngle, (float)windowWidth / (float)windowHeight, 0.5f, 100.0f);
-
-	//Wylicz macierz widoku
-	matV = glm::lookAt(m_eye, m_center, m_up);
-
-
-	//Pod³oga
-	matM = glm::scale(glm::mat4(1.0f), glm::vec3(2*maze_size, 1.0f, 2*maze_size));
-	matM = glm::translate(matM, glm::vec3(0.984f, -2.0f, 0.984f));
-	drawObject();
-	
-	//Sufit
-	/*matM = glm::scale(glm::mat4(1.0f), glm::vec3(2 * maze_size, 1.0f, 2 * maze_size));
-	matM = glm::translate(matM, glm::vec3(0.984f, 2.0f, 0.984f));
-	drawObject();
-	*/
-	
-	DrawMaze();
-
-	//Tylny bufor na przedni
-	glutSwapBuffers();
-}
 
 GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
 	GLuint handle;
@@ -318,7 +282,7 @@ GLuint makeBuffer(void *data, int vertexCount, int vertexSize) {
 
 //Procedura tworz¹ca bufory VBO zawieraj¹ce dane z tablic opisuj¹cych rysowany obiekt.
 void setupVBO() {
-	bufTexCoords = makeBuffer(cubeTexCoords, cubeVertexCount, sizeof(float)* 2);
+	bufTexCoords = makeBuffer(texCoords, vertexCount, sizeof(float)* 2);
 	bufVertices = makeBuffer(vertices, vertexCount, sizeof(float)* 4); //Wspó³rzêdne wierzcho³ków
 	bufColors = makeBuffer(colors, vertexCount, sizeof(float)* 4);//Kolory wierzcho³ków
 	bufNormals = makeBuffer(normals, vertexCount, sizeof(float)* 4);//Wektory normalne wierzcho³ków
@@ -330,7 +294,6 @@ void assignVBOtoAttribute(char* attributeName, GLuint bufVBO, int variableSize) 
 	glEnableVertexAttribArray(location); //W³¹cz u¿ywanie atrybutu o numerze slotu zapisanym w zmiennej location
 	glVertexAttribPointer(location, variableSize, GL_FLOAT, GL_FALSE, 0, NULL); //Dane do slotu location maj¹ byæ brane z aktywnego VBO
 }
-
 
 //Procedura tworz¹ca VAO - "obiekt" OpenGL wi¹¿¹cy numery slotów atrybutów z buforami VBO
 void setupVAO() {
@@ -366,6 +329,59 @@ void changeSize(int w, int h) {
 	windowWidth = w;
 	windowHeight = h;
 }
+
+void DrawFlashlight()
+{
+	vertexCount = fvc;
+	vertices = fv;
+	normals = fn;
+	texCoords = ftv;
+
+	setupVBO();
+	setupVAO();
+
+	matM = glm::translate(glm::mat4(1.0f),glm::vec3(m_center.x,m_center.y,m_center.z));
+	drawObject();
+
+	vertices = cubeVertices;
+	normals = cubeNormals;
+	vertexCount = cubeVertexCount;
+	texCoords = cubeTexCoords;
+
+	setupVBO();
+	setupVAO();
+}
+
+void displayFrame() {
+	//Wyczyœæ bufor kolorów i bufor g³êbokoœci
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//Wylicz macierz rzutowania
+	matP = glm::perspective(cameraAngle, (float)windowWidth / (float)windowHeight, 0.5f, 100.0f);
+
+	//Wylicz macierz widoku
+	matV = glm::lookAt(m_eye, m_center, m_up);
+
+	//Pod³oga
+	matM = glm::scale(glm::mat4(1.0f), glm::vec3(2 * maze_size, 1.0f, 2 * maze_size));
+	matM = glm::translate(matM, glm::vec3(0.984f, -2.0f, 0.984f));
+	drawObject();
+
+
+	//Sufit
+	/*matM = glm::scale(glm::mat4(1.0f), glm::vec3(2 * maze_size, 1.0f, 2 * maze_size));
+	matM = glm::translate(matM, glm::vec3(0.984f, 2.0f, 0.984f));
+	drawObject();
+	*/
+
+	DrawMaze();
+	DrawFlashlight();
+
+	//Tylny bufor na przedni
+	glutSwapBuffers();
+}
+
 
 //Procedura inicjuj¹ca biblotekê glut
 void initGLUT(int *argc, char** argv) {
@@ -429,9 +445,15 @@ int main(int argc, char** argv) {
 	
 	M.Show();
 
+	fvc = read_obj("flashlight.obj", fv, ftv, fn);
+	//for (int i = 0; i < fvc; i++)
+		//printf("%f %f %f\n", fv[3 * i], fv[3 * i + 1], fv[3 * i + 2]);
+
 	initGLUT(&argc, argv);
 	initGLEW();
 	initOpenGL();
+
+	
 	glutKeyboardFunc(Movement);
 	glutWarpPointer(200, 200);
 	glutMotionFunc(MouseActiveMotion);
