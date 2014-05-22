@@ -130,6 +130,9 @@ void drawObject() {
 	glUniform4f(shaderProgram->getUniformLocation("Ls"), 0.0, 1.0, 1.0, 1);
 	glUniform4f(shaderProgram->getUniformLocation("Ms"), 0.0, 1.0, 1.0, 1);
 	glUniform4f(shaderProgram->getUniformLocation("Ld"), 1.0, 1.0, 1.0, 1);
+	glUniform4f(shaderProgram->getUniformLocation("m_eye"), m_eye.x, m_eye.y, m_eye.z, 1);
+	glUniform4f(shaderProgram->getUniformLocation("m_center"), m_center.x, m_center.y, m_center.z, 1);
+	glUniform4f(shaderProgram->getUniformLocation("m_up"), m_up.x, m_up.y, m_up.z, 1);
 
 	glUniform1i(shaderProgram->getUniformLocation("textureMap0"), 0);
 

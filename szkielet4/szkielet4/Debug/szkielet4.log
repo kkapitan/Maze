@@ -1,18 +1,18 @@
-﻿Build started 2014-05-21 20:55:17.
-     1>Project "C:\Users\Krzysztof\Desktop\Grafika\szkielet4\szkielet4\szkielet4.vcxproj" on node 2 (Build target(s)).
+﻿Build started 2014-05-22 14:55:59.
+     1>Project "C:\Users\Łukasz\Documents\Grafika\szkielet4\szkielet4\szkielet4.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         D:\Program Files\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt main_file.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt main_file.cpp
          main_file.cpp
-     1>c:\users\krzysztof\desktop\grafika\szkielet4\szkielet4\main_file.cpp(43): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-     1>c:\users\krzysztof\desktop\grafika\szkielet4\szkielet4\main_file.cpp(353): warning C4244: '+=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\łukasz\documents\grafika\szkielet4\szkielet4\main_file.cpp(43): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\łukasz\documents\grafika\szkielet4\szkielet4\main_file.cpp(356): warning C4244: '+=' : conversion from 'double' to 'float', possible loss of data
        Link:
-         D:\Program Files\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Krzysztof\Desktop\Grafika\szkielet4\Debug\szkielet4.exe" /INCREMENTAL /NOLOGO OPENGL32.LIB freeglut.lib glew32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Krzysztof\Desktop\Grafika\szkielet4\Debug\szkielet4.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Krzysztof\Desktop\Grafika\szkielet4\Debug\szkielet4.lib" /MACHINE:X86 Debug\main_file.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Łukasz\Documents\Grafika\szkielet4\Debug\szkielet4.exe" /INCREMENTAL /NOLOGO OPENGL32.LIB freeglut.lib glew32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Łukasz\Documents\Grafika\szkielet4\Debug\szkielet4.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Łukasz\Documents\Grafika\szkielet4\Debug\szkielet4.lib" /MACHINE:X86 Debug\main_file.obj
          Debug\maze.obj
          Debug\shaderprogram.obj
          Debug\tga.obj
-         szkielet4.vcxproj -> C:\Users\Krzysztof\Desktop\Grafika\szkielet4\Debug\szkielet4.exe
-     1>Done Building Project "C:\Users\Krzysztof\Desktop\Grafika\szkielet4\szkielet4\szkielet4.vcxproj" (Build target(s)).
+         szkielet4.vcxproj -> C:\Users\Łukasz\Documents\Grafika\szkielet4\Debug\szkielet4.exe
+     1>Done Building Project "C:\Users\Łukasz\Documents\Grafika\szkielet4\szkielet4\szkielet4.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:03.86
+Time Elapsed 00:00:01.25
