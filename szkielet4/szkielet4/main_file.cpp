@@ -68,6 +68,7 @@ float fv[10000]; //wierzcho³ki
 float fn[10000]; //wektory normalne
 float ftv[10000];//wsp. texturowania;
 int fvc; //liczba wierzcho³ków latarki;
+glm::mat4 MatO = glm::mat4(1.0);
 
 //Textury
 GLuint bufTexCoords;
@@ -88,6 +89,8 @@ Maze M = Maze(maze_size, maze_size);
 bool fly = false;
 int p_i = 1, p_j = 1;
 
+float angleLR = 0;
+float angleUD = 0;
 
 
 //Procedura rysuj¹ca jakiœ obiekt. Ustawia odpowiednie parametry dla vertex shadera i rysuje.
@@ -184,14 +187,12 @@ void Movement(unsigned char key, int x, int y)
 		{
 			m_eye.x += move.x;
 			m_center.x += move.x;
-			p_i = i;
 		}
 
 		if (fly || !CollisionZ(move, j))
 		{
 			m_eye.z += move.z;
 			m_center.z += move.z;
-			p_j = j;
 		}
 		
 		if (fly)
@@ -233,15 +234,24 @@ void MouseActiveMotion(int mouse_x, int mouse_y)
 		temp = glm::rotate(glm::mat4(1.0f), -relx*mouse_speed, m_up)*glm::vec4(m_center - m_eye, 0);
 		m_center = m_eye + glm::vec3(temp);
 
+		angleLR -= relx*mouse_speed;
+		if (angleLR > 360)angleLR -= 360;
+		if (angleLR < -360)angleLR += 360;
+
 		int rely = mouse_y - mouse_y_prev;
 		glm::vec4 temp2;
-		glm::vec4 temp3;
+
 		glm::vec3 look = glm::normalize(m_center - m_eye);
 		glm::vec3 vert_rot = glm::cross(m_up, look);
 	
 		temp2 = glm::rotate(glm::mat4(1.0f), rely*mouse_speed, vert_rot)*glm::vec4(m_center - m_eye, 0);
-		temp3 = glm::rotate(glm::mat4(1.0f), rely*mouse_speed, vert_rot)*glm::vec4(m_up, 0);
+	
 		m_center = m_eye + glm::vec3(temp2);
+		
+		angleUD += rely*mouse_speed;
+		if (angleUD > 360)angleUD -= 360;
+		if (angleUD < -360)angleUD += 360;
+		printf("%f %f\n", angleUD, angleLR);
 	}
 
 	mouse_x_prev = mouse_x;
@@ -339,8 +349,30 @@ void DrawFlashlight()
 
 	setupVBO();
 	setupVAO();
+	
+	matM = glm::translate(glm::mat4(1.0f), m_center);
+	
+	
+	glm::vec3 temp = m_center - m_eye;
+	glm::vec3 temp2 = glm::normalize( glm::cross(m_up, glm::normalize(temp)));
+	glm::vec3 temp3 = m_up;
+	glm::vec3 temp4 = temp2;
 
-	matM = glm::translate(glm::mat4(1.0f),glm::vec3(m_center.x,m_center.y,m_center.z));
+	temp2 *= -0.2;
+	matM = glm::translate(matM, temp2);
+
+	temp *= -1.0;
+	matM = glm::translate(matM, temp);
+
+	temp3 *= -0.1;
+	matM = glm::translate(matM, temp3);
+
+	matM = glm::scale(matM, glm::vec3(2, 2, 2));
+	matM = glm::rotate(matM, 45.0f, m_up);
+	matM = glm::rotate(matM, angleLR, m_up);
+	matM = glm::rotate(matM, angleUD, temp4);
+	
+	
 	drawObject();
 
 	vertices = cubeVertices;
@@ -362,6 +394,7 @@ void displayFrame() {
 
 	//Wylicz macierz widoku
 	matV = glm::lookAt(m_eye, m_center, m_up);
+
 
 	//Pod³oga
 	matM = glm::scale(glm::mat4(1.0f), glm::vec3(2 * maze_size, 1.0f, 2 * maze_size));
