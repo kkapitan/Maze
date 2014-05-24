@@ -8,18 +8,21 @@
 - [ ] <b>Generator labiryntów:</b>
   - [x] Prosty jednowarstwowy generator.
   - [ ] Wyróżnienie początku i końca (przy założeniu, że gra ma się zakończyć). 
-  - [ ] Dodanie następnych warstw (wrażenie trójwymiarowości) i wyróżnienie punktów przejścia z warstwy do warstwy.
+  - [x] Dodanie następnych warstw (wrażenie trójwymiarowości).
+  - [x] Dodanie miejsc na drabiny.
+  - [ ] Dodanie zapadni (+ ew dźwigni które je wyłączają)
 - [ ] <b>Silnik gry:</b>
   - [x] Analiza labiryntu i generowanie ścian w odpowiednich miejscach. 
   - [x] Uniemożliwienie graczowi przechodzenia przez ściany.
-  - [ ] Obsługa zdarzeń (rozpoczęcie/zakończenie gry, przejście z jednej warstwy na drugą etc.).
+  - [ ] Animacja interakcji z drabiną
+  - [ ] Animacja interakcji z zapadniami
 - [ ] <b>Oświetlenie:</b>
-  - [ ] Światło związane z obserwatorem (latarka?).
+  - [x] Światło związane z obserwatorem (latarka).
   - [ ] Dodatkowe źródło światła (pochodnie?).
 - [ ] <b>Modele i textury:</b>
-  - [ ] Otexturowanie ścian.
-  - [ ] Model latarki?
-  - [ ] Dodatkowe modele?
+  - [x] Otexturowanie ścian.
+  - [ ] Model latarki + umiejscowienie w świecie.
+  - [ ] Model drabiny + umiejscowienie w świecie.
 
 ###Bugi:
 
