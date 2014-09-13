@@ -10,6 +10,7 @@
 #include "teapot.h"
 #include "utilities.h"
 #include "maze.h"
+#include "assimp/Importer.hpp"
 
 //Macierze
 glm::mat4  matP;//rzutowania
@@ -76,9 +77,9 @@ GLuint tex0;
 GLuint tex1;
 
 //Labirynt 
-int maze_size = 5; 
+int maze_size = 8; 
 int cur_layer = 0;
-int layers = 3;
+int layers = 5;
 Maze M = Maze(maze_size, maze_size,layers);
 
 //Zmienne pomocnicze
@@ -284,22 +285,37 @@ void MouseMotion(int mouse_x, int mouse_y)
 	mouse_y_prev = mouse_y;
 }
 
-void DrawLayer(int layer)
-{
+void DrawCeiling(int layer){
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex1);
 
-	matM = glm::scale(glm::mat4(1.0f), glm::vec3(2 * maze_size, 1.0f, 2 * maze_size));
-	matM = glm::translate(matM, glm::vec3(0.984f, 4 * layer - 2.0f, 0.984f));
-	drawObject();
+	for (int i = 0; i < maze_size; i++)
+		for (int j = 0; j < maze_size; j++)
+			if (M[i][j] != 'u')
+				for (int kx = 0; kx < 2; kx++)
+					for (int kz = 0; kz < 2; kz++)
+					{
+						matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i + kx*2.0f, layer*4.0f+2.0f, 4.0f*j + kz*2.0f));
+						drawObject();
+					}
+}
 
-	if (layer == layers - 1)
-	{
-		matM = glm::scale(glm::mat4(1.0f), glm::vec3(2 * maze_size, 1.0f, 2 * maze_size));
-		matM = glm::translate(matM, glm::vec3(0.984f, 4 * layers - 2.0f, 0.984f));
-		drawObject();
-	}
+void DrawFloor(int layer){
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex1);
 
+	for (int i = 0; i < maze_size; i++)
+		for (int j = 0; j < maze_size; j++)
+			if (M[i][j] != 'd')
+				for (int kx = 0; kx < 2; kx++)
+					for (int kz = 0; kz < 2; kz++)
+					{
+						matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i + kx*2.0f, layer*4.0f-2.0f, 4.0f*j + kz*2.0f));
+						drawObject();
+					}
+}
+
+void DrawWalls(int layer){
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex0);
 
@@ -314,11 +330,29 @@ void DrawLayer(int layer)
 					}
 }
 
+void DrawLayer(int layer)
+{
+	DrawCeiling(layer);
+	DrawFloor(layer);
+	DrawWalls(layer);
+}
+
 void DrawMaze()
 {
-	if(cur_layer)DrawLayer(cur_layer - 1);
+	if (cur_layer){
+		M.PreviousLayer();
+		DrawWalls(cur_layer - 1);
+		DrawFloor(cur_layer - 1);
+		M.NextLayer();
+	}
+	if (cur_layer < layers - 1){
+		M.NextLayer();
+		DrawWalls(cur_layer + 1);
+		DrawCeiling(cur_layer + 1);
+		M.PreviousLayer();
+	}
 	DrawLayer(cur_layer);
-	if(cur_layer < layers-1)DrawLayer(cur_layer + 1);
+	
 }
 
 //Procedura rysuj¹ca
@@ -441,6 +475,8 @@ void displayFrame() {
 
 
 	DrawMaze();
+	Sleep(1);
+
 	//DrawFlashlight();
 
 	//Tylny bufor na przedni
