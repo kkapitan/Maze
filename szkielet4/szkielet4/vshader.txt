@@ -6,16 +6,14 @@ uniform mat4 V;
 uniform mat4 M;
 uniform vec4 pos;
 
-
 //Atrybuty
-in vec4 vertex; //wspolrzedne wierzcholka w przestrzeni modelu
-in vec4 color;  //kolor wierzcholka (na razie ignorowany)
-in vec4 normal; //wektor normalny w wierzcholku (na razie ignorowany)
+in vec4 vertex;
+in vec4 color;
+in vec4 normal;
 in vec2 texCoord;
 
 out vec4 ic;
-out vec4 n, l, v;
-//out float distance;
+out vec4 n,l,v;
 out vec4 ver;
 out vec3 eye;
 out vec3 lightDir;
@@ -26,10 +24,9 @@ void main(void) {
 	l=normalize(V*pos-V*M*vertex);
 	v=normalize(vec4(0,0,0,1)-V*M*vertex);
 
-	
 	ver=V*M*vertex;
 	eye=vec3(-ver);
-	lightDir = vec3(pos-ver);
+	lightDir=vec3(pos-ver);
 
 	iTexCoord=texCoord;
 	ic = vec4(0.5,0.5,0.5,1.0);
