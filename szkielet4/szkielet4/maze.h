@@ -12,10 +12,13 @@ class Maze
 private:
 
     static const int MAXS = 50; //maksymalny rozmiar mapy
-	static const int MAXL = 10;
+	static const int MAXL = 5;
     static const char SEP = '#'; //znak oznaczaj¹cy separator
     static const int dx[4];
     static const int dy[4];
+
+	int elevator_i;
+	int elevator_j;
 	
 	vector<int>leafx;
 	vector<int>leafy;
@@ -40,5 +43,7 @@ public:
 	void PreviousLayer();
 	void Show(int layer);
 
+	int getElevatorI();
+	int getElevatorJ();
 };
 #endif

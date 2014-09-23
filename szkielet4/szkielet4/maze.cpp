@@ -84,7 +84,11 @@
 			int r = rand() % leafx.size();
 			sty = leafy[r]; stx = leafx[r];
 			
-			if(k!=layers-1)map[k][sty][stx] = 'u';
+			if (k != layers - 1){
+				map[k][sty][stx] = 'u';
+				this->elevator_i = sty;
+				this->elevator_j = stx;
+			}
 
 			leafx.clear();
 			leafy.clear();
@@ -122,4 +126,10 @@
 
     }
 
+	int Maze::getElevatorI(){
+		return this->elevator_i;
+	}
 
+	int Maze::getElevatorJ(){
+		return this->elevator_j;
+	}

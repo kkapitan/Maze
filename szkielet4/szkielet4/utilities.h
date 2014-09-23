@@ -1,9 +1,9 @@
 #ifndef utilities_h
 #define utilities_h
 
-#include "assimp/Importer.hpp"
-#include "assimp/mesh.h"
-#include "assimp/scene.h"
+//#include "assimp/Importer.hpp"
+//#include "assimp/mesh.h"
+//#include "assimp/scene.h"
 #include<vector>
 #include "GL/glew.h"
 #include "GL/freeglut.h"

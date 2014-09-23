@@ -10,7 +10,7 @@
 #include "teapot.h"
 #include "utilities.h"
 #include "maze.h"
-#include "assimp/Importer.hpp"
+//#include "assimp/Importer.hpp"
 
 //Macierze
 glm::mat4  matP;//rzutowania
@@ -36,6 +36,10 @@ int left_button = 0;
 int right_button = 0;
 int middle_button = 0;
 float mouse_speed = 0.3f;
+
+int direction = 0;
+int current_elevator_i;
+int current_elevator_j;
 
 //Zmienne do animacji
 float speed = 0; //120 stopni/s
@@ -75,6 +79,7 @@ glm::mat4 MatO = glm::mat4(1.0);
 GLuint bufTexCoords;
 GLuint tex0;
 GLuint tex1;
+GLuint tex2;
 
 //Labirynt 
 int maze_size = 8; 
@@ -155,18 +160,16 @@ bool CollisionZ(glm::vec3 move, int &j)
 
 void Up() //Wchodzenie po drabinie (nale¿y uzupe³niæ o animacjê)
 {
-	m_center = glm::vec3(glm::translate(glm::mat4(1.0f), glm::vec3(0, 4, 0))*glm::vec4(m_center, 1));
-	m_eye = glm::vec3(glm::translate(glm::mat4(1.0f), glm::vec3(0, 4, 0))*glm::vec4(m_eye, 1));
-	cur_layer++;
-	M.NextLayer();
+	direction = 1;
+	current_elevator_i = p_i;
+	current_elevator_j = p_j;
 };
 
 void Down() //Schodzenie po drabinie (nale¿y uzupe³niæ o animacjê)
 {
-	m_center = glm::vec3(glm::translate(glm::mat4(1.0f), glm::vec3(0, -4, 0))*glm::vec4(m_center, 1));
-	m_eye = glm::vec3(glm::translate(glm::mat4(1.0f), glm::vec3(0, -4, 0))*glm::vec4(m_eye, 1));
-	cur_layer--;
-	M.PreviousLayer();
+	direction = -1;
+	current_elevator_i = p_i;
+	current_elevator_j = p_j;
 };
 
 void Movement(unsigned char key, int x, int y) 
@@ -183,13 +186,13 @@ void Movement(unsigned char key, int x, int y)
 	int i = 1, j = 1;
 
 
-	if (key == 'a' || key == 'd')
+	if (key == 'a' || key == 'd' )
 	{
 		vrot = glm::rotate(glm::mat4(1.0f), key == 'a' ? 3.0f : -3.0f, m_up)*glm::vec4(m_center - m_eye, 0);
 		m_center = m_eye + glm::vec3(vrot);
 
 	}
-	else if (key == 'w' || key == 's')
+	else if ((key == 'w' || key == 's') && direction == 0)
 	{
 		move = glm::normalize(m_center - m_eye);
 		move *= 0.2;
@@ -305,14 +308,18 @@ void DrawFloor(int layer){
 	glBindTexture(GL_TEXTURE_2D, tex1);
 
 	for (int i = 0; i < maze_size; i++)
-		for (int j = 0; j < maze_size; j++)
-			if (M[i][j] != 'd')
-				for (int kx = 0; kx < 2; kx++)
-					for (int kz = 0; kz < 2; kz++)
-					{
-						matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i + kx*2.0f, layer*4.0f-2.0f, 4.0f*j + kz*2.0f));
-						drawObject();
-					}
+	for (int j = 0; j < maze_size; j++){
+
+		
+		//if (M[i][j] == 'd') current_elevator_i = i, current_elevator_j = j;
+		if (M[i][j] != 'd' || direction==0)
+		for (int kx = 0; kx < 2; kx++)
+		for (int kz = 0; kz < 2; kz++)
+		{
+			matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i + kx*2.0f, layer*4.0f - 2.0f, 4.0f*j + kz*2.0f));
+			drawObject();
+		}
+	}
 }
 
 void DrawWalls(int layer){
@@ -337,6 +344,23 @@ void DrawLayer(int layer)
 	DrawWalls(layer);
 }
 
+void DrawElevator(double step, double step_limit)
+{
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex1);
+	int i = current_elevator_i;
+	int j = current_elevator_j;
+	double layer = cur_layer;
+
+	for (int kx = 0; kx < 2; kx++)
+	for (int kz = 0; kz < 2; kz++)
+	{
+		matM = glm::translate(glm::mat4(1.0f), glm::vec3(4.0f*i + kx*2.0f, layer*4.0f - 2.0f + (direction*step/step_limit)*4.0f, 4.0f*j + kz*2.0f));
+		drawObject();
+	}
+}
+
 void DrawMaze()
 {
 	if (cur_layer){
@@ -352,6 +376,7 @@ void DrawMaze()
 		M.PreviousLayer();
 	}
 	DrawLayer(cur_layer);
+
 	
 }
 
@@ -417,7 +442,7 @@ void changeSize(int w, int h) {
 	windowHeight = h;
 }
 
-void DrawFlashlight()
+/*void DrawFlashlight()
 {
 	vertexCount = fvc;
 	vertices = fv;
@@ -460,7 +485,56 @@ void DrawFlashlight()
 
 	setupVBO();
 	setupVAO();
+}*/
+
+void DrawFlashlight() {
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex2);
+	glm::vec3 dir = m_center - m_eye;
+	matM = glm::translate(glm::mat4(1.0f), m_eye+dir);
+
+	glm::vec4 temp;
+	temp = glm::rotate(glm::mat4(1.0f), angleLR, m_up) * glm::vec4 (m_eye+dir,0);// *glm::vec4(m_center - m_eye, 0);
+
+	glm::vec4 temp2;
+
+	glm::vec3 look = glm::normalize(m_center - m_eye);
+	glm::vec3 vert_rot = glm::cross(m_up, look);
+
+	temp2 = glm::rotate(glm::mat4(1.0f), rely*mouse_speed, vert_rot)*glm::vec4(m_center - m_eye, 0);
+
+	m_center = m_eye + glm::vec3(temp2);
+
+	angleUD += rely*mouse_speed;
+	if (angleUD > 360)angleUD -= 360;
+	if (angleUD < -360)angleUD += 360;
+
+	//matM = glm::scale(matM, glm::vec3(1.0, 1.0, 1.0));
+		drawObject();
 }
+
+void Animate()
+{
+	if (direction != 0){
+		double step_limit = 60;
+		static double step = 0;
+		m_center = glm::vec3(glm::translate(glm::mat4(1.0f), glm::vec3(0, direction * (1 / step_limit) * 4, 0))*glm::vec4(m_center, 1));
+		m_eye = glm::vec3(glm::translate(glm::mat4(1.0f), glm::vec3(0, direction * (1 / step_limit) * 4, 0))*glm::vec4(m_eye, 1));
+		step++;
+		if (step >= step_limit) {
+			step = 0;
+			cur_layer += direction;
+			if (direction == 1) M.NextLayer();
+			else M.PreviousLayer();
+			direction = 0;
+		}
+		else {
+			DrawElevator(step,step_limit);
+		}
+	}
+
+}
+
 
 void displayFrame() {
 	//Wyczyœæ bufor kolorów i bufor g³êbokoœci
@@ -473,7 +547,8 @@ void displayFrame() {
 	//Wylicz macierz widoku
 	matV = glm::lookAt(m_eye, m_center, m_up);
 
-
+	Animate();
+	DrawFlashlight();
 	DrawMaze();
 	Sleep(1);
 
@@ -520,6 +595,7 @@ void setupShaders() {
 void initOpenGL() {
 	tex0 = readTexture("metal.tga");
 	tex1 = readTexture("stones2.tga");
+	tex2 = readTexture("latarka.tga");
 	setupShaders();
 	setupVBO();
 	setupVAO();
@@ -549,6 +625,9 @@ int main(int argc, char** argv) {
 		M.Show(i);
 		printf("\n");
 	}
+
+	current_elevator_i = M.getElevatorI();
+	current_elevator_j = M.getElevatorJ();
 
 	fvc = read_obj("flashlight.obj", fv, ftv, fn);
 
